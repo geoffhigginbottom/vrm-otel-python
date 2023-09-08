@@ -8,7 +8,7 @@ The following env variables are required
 
 ACCESS_TOKEN
 AFT_MPPT_ID
-FWD_MPPT_I
+FWD_MPPT_ID
 REALM
 SITE_ID
 SITE_NAME
