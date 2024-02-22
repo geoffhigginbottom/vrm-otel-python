@@ -32,8 +32,13 @@ def lambda_handler(event, context):
         batteryCurrent=[element['rawValue'] for element in data if element['code']=="I"][0]
         solarPower=[element['rawValue'] for element in data if element['code']=="Pdc"][0]
         consumedAmpHours=[element['rawValue'] for element in data if element['code']=="CE"][0]
+        starterBatteryVoltage=[element['rawValue'] for element in data if element['code']=="VS"][0]
+        houseBatteryVoltage=[element['rawValue'] for element in data if element['code']=="V"][0]
+        cabinHumidity=[element['rawValue'] for element in data if element['code']=="tsH"][0]
+        cabinTemperature=[element['rawValue'] for element in data if element['code']=="tsT"][0]
+        cabinPressure=[element['rawValue'] for element in data if element['code']=="tsB"][0]
         
-        return batterySoC, batteryCurrent, solarPower, consumedAmpHours
+        return batterySoC, batteryCurrent, solarPower, consumedAmpHours, starterBatteryVoltage, houseBatteryVoltage, cabinHumidity, cabinTemperature, cabinPressure
 
     def FWDMPPT(data):
         fwd_values = []  # List to store the values
@@ -88,7 +93,7 @@ def lambda_handler(event, context):
         return aft_values
     
     
-    def O11YSYSOVERVIEW(batterySoC, batteryCurrent, solarPower, consumedAmpHours):
+    def O11YSYSOVERVIEW(batterySoC, batteryCurrent, solarPower, consumedAmpHours, starterBatteryVoltage, houseBatteryVoltage, cabinHumidity, cabinTemperature, cabinPressure):
         endpoint = 'https://ingest.' + realm + '.signalfx.com/v2/datapoint'
         headers = {
             'Content-Type': 'application/json',
@@ -99,6 +104,11 @@ def lambda_handler(event, context):
         {'metric': 'BatteryCurrent', 'value': batteryCurrent},
         {'metric': 'SolarPower', 'value': solarPower},
         {'metric': 'ConsumedAmpHours', 'value': consumedAmpHours},
+        {'metric': 'StarterBatteryVoltage', 'value': starterBatteryVoltage},
+        {'metric': 'HouseBatteryVoltage', 'value': houseBatteryVoltage},
+        {'metric': 'CabinHumidity', 'value': cabinHumidity},
+        {'metric': 'CabinTemperature', 'value': cabinTemperature},
+        {'metric': 'CabinPressure', 'value': cabinPressure},
         ]
     
         for metric in metrics:
@@ -180,10 +190,10 @@ def lambda_handler(event, context):
             response = requests.post(endpoint, headers=headers, json=json_data)
     
     data = VRM()
-    batterySoC, batteryCurrent, solarPower, consumedAmpHours = SYSOVERVIEW(data)
+    batterySoC, batteryCurrent, solarPower, consumedAmpHours, starterBatteryVoltage, houseBatteryVoltage, cabinHumidity, cabinTemperature, cabinPressure = SYSOVERVIEW(data)
     fwdSolarChargerBatteryVoltage, fwdSolarChargerBatteryCurrent, fwdSolarChargerLoadCurrent, fwdSolarChargerPvVoltage, fwdSolarChargerPvPower, fwdSolarChargerMaxChargePowerToday, fwdSolarChargerMaxChargePowerYesterday = FWDMPPT(data)
     aftSolarChargerBatteryVoltage, aftSolarChargerBatteryCurrent, aftSolarChargerLoadCurrent, aftSolarChargerPvVoltage, aftSolarChargerPvPower, aftSolarChargerMaxChargePowerToday, aftSolarChargerMaxChargePowerYesterday = AFTMPPT(data)
         
-    O11YSYSOVERVIEW(batterySoC, batteryCurrent, solarPower, consumedAmpHours)
+    O11YSYSOVERVIEW(batterySoC, batteryCurrent, solarPower, consumedAmpHours, starterBatteryVoltage, houseBatteryVoltage, cabinHumidity, cabinTemperature, cabinPressure)
     O11YFWDMPPT(fwdSolarChargerBatteryVoltage, fwdSolarChargerBatteryCurrent, fwdSolarChargerLoadCurrent, fwdSolarChargerPvVoltage, fwdSolarChargerPvPower, fwdSolarChargerMaxChargePowerToday, fwdSolarChargerMaxChargePowerYesterday)
     O11YAFTMPPT(aftSolarChargerBatteryVoltage, aftSolarChargerBatteryCurrent, aftSolarChargerLoadCurrent, aftSolarChargerPvVoltage, aftSolarChargerPvPower, aftSolarChargerMaxChargePowerToday, aftSolarChargerMaxChargePowerYesterday)
